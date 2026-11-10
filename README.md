@@ -27,4 +27,4 @@ BLP Vocal Enhancer
 
 Source code is available above or just download the compiled plugins in the release tab.
 
-![]([https://github.com/pols-plugins/blp-plugins/blob/main/BLP%20Plugins%20Screenshot.png](https://raw.githubusercontent.com/pols-software/blp-plugins/refs/heads/main/BLP%20Plugins%20Screenshot%20v1.0.1.png))
+![](https://raw.githubusercontent.com/pols-software/blp-plugins/refs/heads/main/BLP%20Plugins%20Screenshot%20v1.0.1.png)
