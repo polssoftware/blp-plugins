@@ -1,0 +1,13 @@
+PASS actual VST3 44100 Hz mode 0 finite output peak=0.624712
+PASS actual VST3 44100 Hz mode 1 finite output peak=0.591844
+PASS actual VST3 44100 Hz mode 2 finite output peak=0.523525
+PASS actual VST3 44100 Hz mode 3 finite output peak=0.541086
+PASS actual VST3 44100 Hz mode 4 finite output peak=0.551103
+PASS actual VST3 44100 Hz mode 5 finite output peak=0.81832, exact bypass
+PASS actual VST3 48000 Hz mode 0 finite output peak=0.6285
+PASS actual VST3 48000 Hz mode 1 finite output peak=0.596716
+PASS actual VST3 48000 Hz mode 2 finite output peak=0.528398
+PASS actual VST3 48000 Hz mode 3 finite output peak=0.541858
+PASS actual VST3 48000 Hz mode 4 finite output peak=0.552498
+PASS actual VST3 48000 Hz mode 5 finite output peak=0.816193, exact bypass
+PASS new instance ratio default 12:1

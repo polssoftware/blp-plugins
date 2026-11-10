@@ -1,0 +1,26 @@
+{
+  "original48": {
+    "error_percent": 80.08063757295236,
+    "correlation": 0.9621583412293552,
+    "rms_dbfs": -31.387032243726814,
+    "peak_dbfs": -13.289819195574315
+  },
+  "BandLab48": {
+    "error_percent": 0.0,
+    "correlation": 1.0,
+    "rms_dbfs": -36.073219274903394,
+    "peak_dbfs": -18.70061706341363
+  },
+  "updated44100": {
+    "error_percent": 10.402482575995698,
+    "correlation": 0.9945822832680711,
+    "rms_dbfs": -36.124546274308756,
+    "peak_dbfs": -20.980903604364187
+  },
+  "updated48000": {
+    "error_percent": 10.41742317114137,
+    "correlation": 0.9945964206410015,
+    "rms_dbfs": -36.187716272171656,
+    "peak_dbfs": -21.072788108215672
+  }
+}

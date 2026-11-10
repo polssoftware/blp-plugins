@@ -1,4 +1,8 @@
-# BLP DeEsser — BLP
+WAV calibration revision 2026-11-10: see Calibration.md. A high-pass detector now drives shared broadband attenuation, jointly calibrated at 8 kHz and -19/-40 dB. No fixed makeup or audio-path band subtraction remains. Earlier MP3-fit descriptions below are historical and superseded. Other settings remain provisional.
+
+Calibration revision 2026-11-10: see Calibration.md. DSP now uses a focused detector with predominantly broadband reduction at the measured setting; earlier descriptions of band-only subtraction are superseded. Other settings remain provisional.
+
+# BLP DeEsser â€” BLP
 Windows x64 VST3. Frequency-selective vocal de-esser.
 
 GUI: vertical Threshold slider, horizontal Frequency slider, editable numeric values and Bypass. Dark reference-inspired background with static decorative dots and a yellow frequency marker. Dots are not a live analyzer.
@@ -14,7 +18,7 @@ For Visual Studio C1902, set $env:_CL_='/Z7' before building in PowerShell.
 Original DSP tests passed in the prior version; DSP is unchanged. Live DAW validation is not completed. JUCE is separately licensed under AGPLv3 or commercial terms; see https://juce.com/legal/juce-8-licence/.
 
 
-Updated controls: Frequency 1000–16000 Hz in 1 Hz steps, no decimals; Threshold -40.0–0.0 dB in 0.1 dB steps; Bypass at top right. Frequency marker follows the expanded range. Existing normalized host automation may map differently because the parameter ranges changed.
+Updated controls: Frequency 1000â€“16000 Hz in 1 Hz steps, no decimals; Threshold -40.0â€“0.0 dB in 0.1 dB steps; Bypass at top right. Frequency marker follows the expanded range. Existing normalized host automation may map differently because the parameter ranges changed.
 Rebuilt successfully and reran the signal/state regression test successfully. Live DAW validation remains incomplete.
 
 New-instance defaults: Frequency 9000 Hz; Threshold -19.0 dB. Existing saved projects retain their stored settings.

@@ -1,6 +1,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <iostream>
 #include <stdexcept>
+#include <complex>
 #include "../Source/Plugin.cpp"
 void check(bool b,const char* m) { if(!b) throw std::runtime_error(m); }
 struct PresetVisitor : juce::ExtensionsVisitor {
@@ -64,7 +65,12 @@ int main(int argc,char** argv) {
         for(int band=0;band<7;++band) for(float norm:{0.0f,1.0f}) {
             for(auto* param:params) param->setValueNotifyingHost(param->getDefaultValue());
             auto* param=findParam(names[band]); param->beginChangeGesture();param->setValueNotifyingHost(norm);param->endChangeGesture();
-            check(std::abs(measure(EqDSP::frequencies[size_t(band)])-(norm==0?-15:15))<0.05,"VST3 automated band response");
+            const auto frequency=EqDSP::frequencies[size_t(band)];
+            const auto c=EqDSP::bandCoefficients(48000, size_t(band), norm==0 ? -15 : 15);
+            const auto z=std::polar(1.0,-6.2831853071795864769*frequency/48000.0);
+            const auto transfer=(c[0]+c[1]*z+c[2]*z*z)/(1.0+c[3]*z+c[4]*z*z);
+            const auto expected=20.0*std::log10(std::abs(transfer));
+            check(std::abs(measure(frequency)-expected)<0.05,"VST3 automated fitted-band response");
         }
         for(auto* param:params) param->setValueNotifyingHost(param->getDefaultValue());
         for(float norm:{0.0f,1.0f}) {
@@ -75,6 +81,47 @@ int main(int argc,char** argv) {
         check(std::abs(measure(997))<0.001,"VST3 bypass");
         p->releaseResources();
         std::cout<<"PASS VST3 automated seven-band gains, Output and Bypass audio measurements\n";
+        if(argc>=3) {
+            const juce::File folder(argv[2]);
+            check(folder.isDirectory(),"sweep input directory missing");
+            for(double rate : {44100.,48000.}) {
+                juce::MemoryBlock input;
+                check(folder.getChildFile("input-"+juce::String(int(rate))+".f32").loadFileAsData(input),
+                      "sweep input load failed");
+                check(input.getSize()%sizeof(float)==0,"invalid sweep input");
+                const auto count=int(input.getSize()/sizeof(float));
+                const auto* source=static_cast<const float*>(input.getData());
+                for(int band=0;band<7;++band) {
+                    p->releaseResources();
+                    for(auto* param:params) param->setValueNotifyingHost(param->getDefaultValue());
+                    findParam(names[band])->setValueNotifyingHost(1.0f);
+                    p->setRateAndBufferSizeDetails(rate,257);
+                    p->prepareToPlay(rate,257);
+                    juce::AudioBuffer<float> audio(2,257);
+                    juce::MidiBuffer midi;
+                    for(int block=0;block<int(rate/257)+1;++block) {
+                        audio.clear();
+                        p->processBlock(audio,midi);
+                    }
+                    std::vector<float> result(static_cast<size_t>(count));
+                    for(int offset=0;offset<count;) {
+                        const int length=juce::jmin(257,count-offset);
+                        audio.setSize(2,length,false,false,true);
+                        for(int channel=0;channel<2;++channel)
+                            audio.copyFrom(channel,0,source+offset,length);
+                        p->processBlock(audio,midi);
+                        for(int i=0;i<length;++i) {
+                            check(audio.getSample(0,i)==audio.getSample(1,i),"host sweep stereo mismatch");
+                            result[static_cast<size_t>(offset+i)]=audio.getSample(0,i);
+                        }
+                        offset+=length;
+                    }
+                    const auto file=folder.getChildFile("vst3-band-"+juce::String(band)+"-"+juce::String(int(rate))+".f32");
+                    check(file.replaceWithData(result.data(),result.size()*sizeof(float)),"host sweep save failed");
+                }
+                std::cout<<"PASS rendered seven isolated VST3 sweeps at "<<rate<<" Hz\n";
+            }
+        }
         std::vector<float> saved;
         for(int i=0;i<params.size();++i) {
             const auto value=params[i]->getName(100)=="Bypass" ? float(i%2) : float(i%3)*0.3f;
@@ -102,7 +149,7 @@ int main(int argc,char** argv) {
         for(int i=0;i<params.size();++i) check(std::abs(params[i]->getValue()-saved[size_t(i)])<0.0001f,"preset restore failed");
         std::unique_ptr<juce::AudioProcessorEditor> editor(p->createEditorIfNeeded());
         check(editor!=nullptr,"editor missing");
-        check(editor->getWidth()==480&&editor->getHeight()==300,"editor size");
+        check(editor->getWidth()==480&&editor->getHeight()==270,"editor size");
         GraphicEQProcessor previewProcessor;
         std::unique_ptr<juce::AudioProcessorEditor> preview(previewProcessor.createEditor());
         int knobs=0,vertical=0,rotary=0;

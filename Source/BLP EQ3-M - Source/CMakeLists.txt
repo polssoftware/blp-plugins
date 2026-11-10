@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(EQ3M VERSION 1.0.0 LANGUAGES C CXX)
+project(EQ3M VERSION 1.0.1 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(JUCE_DIR "" CACHE PATH "Local JUCE source")
 if(JUCE_DIR)
@@ -13,3 +13,12 @@ juce_add_plugin(EQ3M COMPANY_NAME BLP BUNDLE_ID audio.independent.eq3m PLUGIN_MA
 target_sources(EQ3M PRIVATE Plugin.cpp)
 target_compile_definitions(EQ3M PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
 target_link_libraries(EQ3M PUBLIC juce::juce_audio_utils juce::juce_dsp PRIVATE juce::juce_recommended_config_flags)
+
+
+option(EQ3M_BUILD_TESTS "Build EQ3-M VST3 response validation host" OFF)
+if(EQ3M_BUILD_TESTS)
+ juce_add_console_app(EQ3MHostTests PRODUCT_NAME "EQ3-M Host Tests")
+ target_sources(EQ3MHostTests PRIVATE Tests/HostTests.cpp)
+ target_compile_definitions(EQ3MHostTests PRIVATE JUCE_PLUGINHOST_VST3=1 JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+ target_link_libraries(EQ3MHostTests PRIVATE juce::juce_audio_utils juce::juce_dsp)
+endif()

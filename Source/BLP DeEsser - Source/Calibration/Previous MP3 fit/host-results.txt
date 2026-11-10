@@ -1,0 +1,6 @@
+PASS actual VST3 44100 Hz mode 0 finite output peak=0.0893213
+PASS actual VST3 44100 Hz mode 1 finite output peak=0.221008, unity dry/bypass
+PASS actual VST3 44100 Hz mode 2 finite output peak=0.221008, unity dry/bypass
+PASS actual VST3 48000 Hz mode 0 finite output peak=0.0883813
+PASS actual VST3 48000 Hz mode 1 finite output peak=0.222076, unity dry/bypass
+PASS actual VST3 48000 Hz mode 2 finite output peak=0.222076, unity dry/bypass

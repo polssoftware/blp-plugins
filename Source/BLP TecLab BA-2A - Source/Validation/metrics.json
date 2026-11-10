@@ -1,0 +1,38 @@
+{
+  "44100": {
+    "rms_dbfs": -24.82364220767074,
+    "peak_dbfs": -5.480417604991015,
+    "relative_error_db": -21.36256279975997,
+    "relative_error_percent": 8.548144599083034,
+    "correlation": 0.9963398618806931,
+    "best_level_adjustment_db": 0.0038851800989582355,
+    "level_compensated_relative_error_db": -21.36268079403832
+  },
+  "48000": {
+    "rms_dbfs": -24.821954583606512,
+    "peak_dbfs": -5.377918298251444,
+    "relative_error_db": -21.351252018059434,
+    "relative_error_percent": 8.559283259755027,
+    "correlation": 0.9963302292186094,
+    "best_level_adjustment_db": 0.002129153109546069,
+    "level_compensated_relative_error_db": -21.351287368645025
+  },
+  "original_48000": {
+    "rms_dbfs": -27.35883952915077,
+    "peak_dbfs": -4.9914255079379135,
+    "relative_error_db": -9.278307983601774,
+    "relative_error_percent": 34.362487970868564,
+    "correlation": 0.9647510356641966,
+    "best_level_adjustment_db": 2.259249655921552,
+    "level_compensated_relative_error_db": -11.595415933537634
+  },
+  "target_48000": {
+    "rms_dbfs": -24.78789828421403,
+    "peak_dbfs": -5.361716446351767,
+    "relative_error_db": -600.0,
+    "relative_error_percent": 0.0,
+    "correlation": 0.9999999999999999,
+    "best_level_adjustment_db": 0.0,
+    "level_compensated_relative_error_db": -600.0
+  }
+}

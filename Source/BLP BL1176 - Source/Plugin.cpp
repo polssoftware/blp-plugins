@@ -22,7 +22,7 @@ State::ParameterLayout parameters()
     knob("output", "Output", -15, 15, 0, true);
     knob("attack", "Attack", 0, 10, 1.2f, false);
     knob("release", "Release", 0, 10, 5, false);
-    p.add(std::make_unique<AudioParameterChoice>(ParameterID { "ratio", 1 }, "Ratio", ratios, 0));
+    p.add(std::make_unique<AudioParameterChoice>(ParameterID { "ratio", 1 }, "Ratio", ratios, 2));
     p.add(std::make_unique<AudioParameterBool>(ParameterID { "bypass", 1 }, "Bypass", false));
     return p;
 }
@@ -30,7 +30,7 @@ State::ParameterLayout parameters()
 constexpr std::array ids { "input", "output", "attack", "release", "ratio", "bypass" };
 struct Preset { const char* name; std::array<float, 6> values; };
 constexpr Preset presets[] {
-    { "Default", { 10, 0, 1.2f, 5, 0, 0 } },
+    { "Default", { 10, 0, 1.2f, 5, 2, 0 } },
     { "Vocal Control", { 8, 1, 2, 4, 0, 0 } },
     { "Rap Forward", { 13, 2, 4, 7, 1, 0 } },
     { "Peak Tamer", { 7, 0, 9, 5, 3, 0 } },
@@ -52,7 +52,7 @@ public:
     bool acceptsMidi() const override { return false; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
-    double getTailLengthSeconds() const override { return 0; }
+    double getTailLengthSeconds() const override { return 0.25; }
     bool isBusesLayoutSupported(const BusesLayout& layout) const override
     {
         const auto out = layout.getMainOutputChannelSet();
@@ -97,12 +97,17 @@ public:
 
     void prepareToPlay(double rate, int) override
     {
-        sampleRate = rate;
+        sampleRate = std::isfinite(rate) && rate >= 8000 ? rate : 44100;
         reduction = 0;
+        colourState = {};
+        const auto kh = std::tan(MathConstants<double>::pi * jmin(6.97116726008586, sampleRate * 0.45) / sampleRate);
+        const auto kl = std::tan(MathConstants<double>::pi * jmin(13685.11931106457, sampleRate * 0.45) / sampleRate);
+        hpB = 1.0 / (1.0 + kh); hpA = (kh - 1.0) / (kh + 1.0);
+        lpB = kl / (1.0 + kl); lpA = (kl - 1.0) / (kl + 1.0);
         const auto values = targets(false);
         for (size_t i = 0; i < smooth.size(); ++i)
         {
-            smooth[i].reset(rate, 0.005);
+            smooth[i].reset(sampleRate, 0.005);
             smooth[i].setCurrentAndTargetValue(values[i]);
         }
     }
@@ -114,19 +119,26 @@ public:
     State state;
 
 private:
-    std::array<float, 7> targets(bool bypass) const
+    std::array<float, 8> targets(bool bypass) const
     {
-        constexpr float slopes[] { 0.75f, 0.875f, 11.0f / 12.0f, 0.95f, 0.98f };
+        // Independent fitted endpoints from five default-setting WAV renders.
+        // These coefficients are provisional outside the measured control settings.
+        constexpr double baseAttack[] { 5.330442784078851e-05, 4.031027143211599e-05, 1.720194646725556e-05, 1.40872640849921e-05, 1.000013420222141e-05 };
+        constexpr double baseRelease[] { 0.2055064684842672, 0.2100429862866149, 0.2199693789250136, 0.2182936061616323, 0.230261067078304 };
+        constexpr double thresholds[] { -8.541374910645118, -8.158610866640711, -7.51594512216405, -6.969759159682843, -6.859030111056949 };
+        constexpr double slopes[] { 0.8556670297904844, 0.8918012324646883, 0.9493099708445254, 0.9545949639680891, 0.9769617136316602 };
+        constexpr double knees[] { 0.02604494703323767, 0.130074243628927, 0.05815043072281258, 0.411515438690739, 0.03308126052662265 };
+        constexpr double makeup[] { 0.2250982121194411, 0.3042885038041554, 0.5353411445307863, 0.4555727904727025, 0.8441722769018494 };
         const auto ratio = jlimit(0, 4, roundToInt(raw[4]->load()));
-        const auto attackSeconds = 0.0008 * std::pow(0.025, raw[2]->load() / 10.0);
-        const auto releaseSeconds = (ratio == 4 ? 0.65 : 1.0)
-            * 1.1 * std::pow(0.05 / 1.1, raw[3]->load() / 10.0);
+        const auto attackSeconds = baseAttack[ratio] * std::pow(0.025, (raw[2]->load() - 1.2) / 10.0);
+        const auto releaseSeconds = baseRelease[ratio] * std::pow(0.05 / 1.1, (raw[3]->load() - 5.0) / 10.0);
         return { Decibels::decibelsToGain(raw[0]->load()),
-                 Decibels::decibelsToGain(raw[1]->load()),
+                 Decibels::decibelsToGain(raw[1]->load() + static_cast<float>(makeup[ratio])),
                  static_cast<float>(-std::expm1(-1.0 / (sampleRate * attackSeconds))),
                  static_cast<float>(-std::expm1(-1.0 / (sampleRate * releaseSeconds))),
-                 slopes[ratio], ratio == 4 ? -21.0f : -18.0f,
-                 bypass || raw[5]->load() >= 0.5f ? 0.0f : 1.0f };
+                 static_cast<float>(slopes[ratio]), static_cast<float>(thresholds[ratio]),
+                 bypass || raw[5]->load() >= 0.5f ? 0.0f : 1.0f,
+                 static_cast<float>(knees[ratio]) };
     }
 
     void process(AudioBuffer<float>& audio, bool bypass)
@@ -153,22 +165,33 @@ private:
                 peak = jmax(peak, std::abs(channels[c][i]));
 
             const auto over = Decibels::gainToDecibels(peak * input, -120.0f) - threshold;
-            // A 4 dB soft knee blends the slopes around the threshold.
-            const auto knee = jlimit(0.0f, 4.0f, over + 2.0f);
-            const auto target = slope * (knee * knee / 8.0f + jmax(0.0f, over - 2.0f));
+            const auto width = smooth[7].getNextValue();
+            const auto knee = jlimit(0.0f, width, over + width * 0.5f);
+            const auto target = slope * (knee * knee / (2.0f * width) + jmax(0.0f, over - width * 0.5f));
             reduction += (target - reduction) * (target > reduction ? attack : release);
             const auto wetGain = input * output * Decibels::decibelsToGain(-reduction, -160.0f);
-            const auto gain = 1.0f + mix * (wetGain - 1.0f);
             for (int c = 0; c < count; ++c)
-                channels[c][i] *= gain;
+            {
+                const auto dry = channels[c][i];
+                auto& colour = colourState[static_cast<size_t>(c)];
+                const double driven = dry * wetGain;
+                const double high = hpB * driven + colour.hp;
+                colour.hp = -hpB * driven - hpA * high;
+                const double low = lpB * high + colour.lp;
+                colour.lp = lpB * high - lpA * low;
+                channels[c][i] = dry + mix * (static_cast<float>(low) - dry);
+            }
         }
     }
 
     std::array<std::atomic<float>*, 6> raw {};
-    std::array<SmoothedValue<float>, 7> smooth;
+    std::array<SmoothedValue<float>, 8> smooth;
     std::atomic<int> program { 0 };
     double sampleRate = 44100;
     float reduction = 0;
+    struct ColourState { double hp = 0, lp = 0; };
+    std::array<ColourState, 2> colourState {};
+    double hpB = 1, hpA = 0, lpB = 1, lpA = 0;
 };
 
 class KnobStyle final : public blp::EditorLookAndFeel

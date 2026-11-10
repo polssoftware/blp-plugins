@@ -8,7 +8,19 @@ constexpr const char* ids[]{"lowFreq","lowGain","midFreq","midGain","midQ","high
 class EQ final : public AudioProcessor {
     struct Biquad {
         std::array<double,6> c{1,0,0,1,0,0};
+        std::array<double,6> destination{1,0,0,1,0,0}, delta{};
         double z1=0,z2=0;
+
+        void setCoefficients(const std::array<double,6>& next, bool immediately) {
+            destination=next;
+            for(size_t i=0;i<c.size();++i)
+                delta[i]=(destination[i]-c[i])/8.0;
+            if(immediately) { c=destination; delta={}; }
+        }
+        void advanceCoefficients(unsigned remaining) {
+            for(size_t i=0;i<c.size();++i)
+                c[i]=remaining==0 ? destination[i] : c[i]+delta[i];
+        }
         double tick(double x) {
             const auto y=c[0]*x+z1;
             z1=c[1]*x-c[4]*y+z2;
@@ -25,7 +37,9 @@ class EQ final : public AudioProcessor {
         AudioProcessorValueTreeState::ParameterLayout result;
         const float low[]{40,-30,100,-30,.3f,1000,-30,-30};
         const float high[]{500,30,8000,30,4,16000,30,12};
-        const float initial[]{120,0,8000,0,1,8000,0,0};
+        // Calibrated single-band +30 dB targets. Other gains remain the
+        // provisional RBJ mapping; existing saved parameter values are retained.
+        const float initial[]{220,0,5000,0,1.2f,7000,0,0};
         for(int i=0;i<8;++i) {
             NormalisableRange<float> range(low[i],high[i],i==1||i==3||i==6?1.f:0.f);
             if(i==0||i==2||i==5)
@@ -41,17 +55,20 @@ class EQ final : public AudioProcessor {
         return result;
     }
 
-    void updateCoefficients() {
+    void updateCoefficients(bool immediately=false) {
         using C=dsp::IIR::ArrayCoefficients<double>;
         auto freq=[&](int i){return jlimit(10.,rate*.45,smooth[i].getCurrentValue());};
         auto gain=[&](int i){return Decibels::decibelsToGain(smooth[i].getCurrentValue());};
+        // JUCE's ArrayCoefficients shelf API expects Q, not slope S.
+        // Q=1/sqrt(2) makes beta=sin(w)*sqrt(2*A), the RBJ S=1 shelf.
+        constexpr double shelfQ=0.7071067811865475244;
         std::array<std::array<double,6>,3> coefficients{
-            C::makeLowShelf(rate,freq(0),.70710678,gain(1)),
+            C::makeLowShelf(rate,freq(0),shelfQ,gain(1)),
             C::makePeakFilter(rate,freq(2),smooth[4].getCurrentValue(),gain(3)),
-            C::makeHighShelf(rate,freq(5),.70710678,gain(6))};
+            C::makeHighShelf(rate,freq(5),shelfQ,gain(6))};
         for(auto& c:coefficients) { const auto a0=c[3]; for(auto& value:c) value/=a0; }
         for(auto& channel:filters)
-            for(size_t band=0;band<channel.size();++band) channel[band].c=coefficients[band];
+            for(size_t band=0;band<channel.size();++band) channel[band].setCoefficients(coefficients[band],immediately);
     }
     void process(AudioBuffer<float>& audio,bool bypassed) {
         ScopedNoDenormals guard;
@@ -59,7 +76,10 @@ class EQ final : public AudioProcessor {
             smooth[i].setTargetValue(i==8&&bypassed?1.0:state.getRawParameterValue(ids[i])->load());
         for(int n=0;n<audio.getNumSamples();++n) {
             for(auto& value:smooth) value.getNextValue();
-            if(phase++%8==0) updateCoefficients();
+            if(phase==0) updateCoefficients();
+            for(auto& channel:filters)
+                for(auto& filter:channel) filter.advanceCoefficients(7-phase);
+            phase=(phase+1)%8;
             const auto gain=Decibels::decibelsToGain(smooth[7].getCurrentValue());
             const auto dryMix=smooth[8].getCurrentValue();
             for(int ch=0;ch<jmin(2,audio.getNumChannels());++ch) {
@@ -90,12 +110,12 @@ public:
     }
     AudioProcessorParameter* getBypassParameter() const override {return state.getParameter("bypass");}
     void prepareToPlay(double sampleRate,int) override {
-        rate=sampleRate; phase=0; filters={};
+        rate=std::isfinite(sampleRate)&&sampleRate>=8000 ? sampleRate : 44100; phase=0; filters={};
         for(size_t i=0;i<smooth.size();++i) {
             smooth[i].reset(rate,.03);
             smooth[i].setCurrentAndTargetValue(state.getRawParameterValue(ids[i])->load());
         }
-        updateCoefficients();
+        updateCoefficients(true);
     }
     void processBlock(AudioBuffer<float>& b,MidiBuffer&) override {process(b,false);}
     void processBlockBypassed(AudioBuffer<float>& b,MidiBuffer&) override {process(b,true);}

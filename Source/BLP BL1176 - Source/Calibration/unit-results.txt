@@ -1,0 +1,3 @@
+PASS 44100 Hz: parameter extremes, stereo symmetry, mono consistency, finite automation, decaying filter tail
+PASS 48000 Hz: parameter extremes, stereo symmetry, mono consistency, finite automation, decaying filter tail
+PASS fresh/Default 12:1, saved-ratio recall, unchanged 430x270 GUI. Extreme-test peak=6.45185

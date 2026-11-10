@@ -1,18 +1,18 @@
-BLP TecLab BA-2A — BLP
+BLP TecLab BA-2A - calibrated default response (2026-11-10)
 
-INSTALL: Copy the entire BLP TecLab BA-2A.vst3 folder into C:\Program Files\Common Files\VST3, then rescan plugins in your DAW. Windows x64 only.
+Windows x64 VST3. Copy the entire BLP TecLab BA-2A.vst3 bundle to your VST3 folder and rescan in the DAW.
 
-Gain is displayed as 0–100%, controlling compression-dependent makeup. Its nominal -12 to +24 dB range is scaled by actual reduction (up to full strength at 24 dB reduction). At the default 60%, it restores 40% of reduction up to +9.6 dB. Squeeze at 0% applies no compression or makeup gain; with Output at its default 0 dB, the signal is unchanged after the 30 ms parameter smoothing settles. Higher Squeeze progressively increases compression. Squeeze defaults to 70%. Mix defaults to 100%, Output to 0 dB, mode to Compress. The editor shows only Gain and Squeeze knobs, with percentage values shown on hover. Bypass is at the top right. Mix and Output remain available as host parameters for existing project compatibility. Double-click resets a knob. Bypass crossfades to untouched input. The final soft safety saturation prevents processed output from exceeding full scale; bypass preserves original audio. No lookahead or latency.
+This revision fits the user's supplied dry recording and BandLab default-setting render. See Response Validation.md for numerical results, measurement limits, and source/build checks. It is an independent approximation, not proprietary BandLab code.
 
-The preset selector has been removed from the editor. Save/load custom presets using your DAW's VST3 preset or project-state facilities. All six parameters support host automation. The algorithm is an independent optical-style approximation, not an emulation of proprietary BandLab code.
+Defaults and parameter IDs are unchanged: Squeeze 70%, Gain 60%, Compress, Mix 100%, Output 0 dB. The GUI and title are unchanged. Existing sessions retain their parameter values but will use the revised processing after replacing the plugin.
 
-BUILD: Install Visual Studio 2022 C++ Desktop tools, CMake 3.22+, and JUCE source. From this source directory:
+Processing changes: stereo-linked mean-square detector; fitted fast attack/release and wide soft knee; revised compression ratio and threshold; shorter, program-dependent reduction recovery; Gain controls a fixed makeup level instead of varying with instantaneous reduction. At default Gain the calibrated makeup is about +0.511 dB. Gain changes by 0.36 dB per percent around 60%. Squeeze changes threshold continuously around the measured 70% setting. Limit mode and other control settings are provisional and have not been matched to BandLab. Squeeze 0 disables compression and makeup after smoothing settles. The existing -1 dBFS soft safety stage is retained; it is inactive for the supplied default-setting comparison and is not evidence of measured BandLab saturation.
+
+30 ms parameter smoothing remains. Bypass crossfades to the unaltered input. Mix/Output are still host-automatable. No lookahead, latency, input file detection, or per-recording gain envelope is embedded.
+
+Build with Visual Studio 2022, CMake and separately licensed JUCE source:
 cmake -S . -B build -A x64 -DJUCE_DIR="C:/path/to/JUCE"
 cmake --build build --config Release --parallel
-Result: build/BLPTecLab_artefacts/Release/VST3
-Run build/BLPTests_artefacts/Release/BLPTests.exe for DSP smoke checks.
-JUCE is an external dependency subject to its own licensing; obtain the appropriate JUCE license for distribution.
+The calibration build used JUCE 8.0.12. JUCE licensing requirements still apply.
 
-Testing: See Test-results.txt. Compilation and synthetic signal checks do not establish compatibility with every DAW. In-DAW loading and listening tests remain required.
-
-
+Tests.cpp provides the original DSP smoke checks. Optional BA2A_BUILD_HOST_TESTS=ON builds Validation/HostTests.cpp, which loads the compiled VST3, renders supplied interleaved stereo float32 dry-44100.f32 / dry-48000.f32 inputs, and tests bypass, dry mix, state, stereo and parameter extremes. Invoke BA2AHostTests with the VST3 bundle path and a directory containing those inputs. Test inputs are not embedded in the source package.

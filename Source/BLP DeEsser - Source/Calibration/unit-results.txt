@@ -1,0 +1,1 @@
+body=1 sibilance=0.103847 dry=1 bypass=1 restored=6000

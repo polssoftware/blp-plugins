@@ -24,3 +24,5 @@ CMake fetches JUCE 8.0.6. For an offline build, append `-DJUCE_DIR=C:/path/to/JU
 The completed bundle is at `build/BLPDIGIComp_artefacts/Release/VST3/BLP DIGI Comp.vst3`.
 
 If MSVC reports C1902 while building JUCE's helper, set `$env:_CL_ = "/Z7"` in the same PowerShell session and rerun the commands.
+
+Calibration update: see Calibration.md. Internal timing/knee/threshold scaling and ratio-dependent makeup now approximate the supplied BandLab renders. Other settings remain provisional.

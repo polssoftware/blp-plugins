@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(BLPDIGIComp VERSION 1.0.0 LANGUAGES C CXX)
+project(BLPDIGIComp VERSION 1.0.1 LANGUAGES C CXX)
 set(JUCE_DIR "" CACHE PATH "Local JUCE source checkout")
 if(JUCE_DIR)
     add_subdirectory("${JUCE_DIR}" JUCE)

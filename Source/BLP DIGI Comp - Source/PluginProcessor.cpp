@@ -81,19 +81,21 @@ void Compressor::render(juce::AudioBuffer<float>& buffer, bool hostBypass)
 
     auto* left = buffer.getWritePointer(0);
     auto* right = buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : nullptr;
-    auto attack = std::exp(timeScale / smooth[0].getCurrentValue());
-    auto release = std::exp(timeScale / smooth[1].getCurrentValue());
+    // Provisional calibration from the supplied 1:1 and 20:1 renders.
+    // Other settings and native BandLab 48 kHz behavior remain unverified.
+    auto attack = std::exp(timeScale / (smooth[0].getCurrentValue() * 0.096830735515f));
+    auto release = std::exp(timeScale / (smooth[1].getCurrentValue() * 0.740669820127f));
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
         if (smooth[0].isSmoothing())
-            attack = std::exp(timeScale / smooth[0].getNextValue());
+            attack = std::exp(timeScale / (smooth[0].getNextValue() * 0.096830735515f));
         if (smooth[1].isSmoothing())
-            release = std::exp(timeScale / smooth[1].getNextValue());
+            release = std::exp(timeScale / (smooth[1].getNextValue() * 0.740669820127f));
 
         const auto peak = std::max(std::abs(left[i]), right ? std::abs(right[i]) : 0.f);
-        const auto over = juce::Decibels::gainToDecibels(peak, -120.f) - smooth[2].getNextValue();
+        const auto over = juce::Decibels::gainToDecibels(peak, -120.f) - (smooth[2].getNextValue() -0.693294886065f);
         const auto slope = 1.f - 1.f / smooth[3].getNextValue();
-        const auto knee = smooth[4].getNextValue();
+        const auto knee = smooth[4].getNextValue() * 4.999895694015f;
         const auto halfKnee = knee * 0.5f;
         auto target = 0.f;
         if (over >= halfKnee)
@@ -109,7 +111,7 @@ void Compressor::render(juce::AudioBuffer<float>& buffer, bool hostBypass)
         const auto mix = wet.getNextValue();
         if (mix > 0.f)
         {
-            const auto compressedGain = std::pow(10.f, -reduction * 0.05f);
+            const auto compressedGain = std::pow(10.f, (12.502138393784f * slope - reduction) * 0.05f);
             const auto gain = 1.f + mix * (compressedGain - 1.f);
             left[i] *= gain;
             if (right)

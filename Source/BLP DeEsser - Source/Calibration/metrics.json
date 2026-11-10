@@ -1,0 +1,70 @@
+{
+  "19": {
+    "target48": {
+      "error_percent": 0.0,
+      "rms_dbfs": -20.918056324861478,
+      "peak_dbfs": -3.9393630103151893,
+      "correlation": 1.0,
+      "level_compensated_error_percent": 0.0,
+      "diagnostic_gain_db": 0.0
+    },
+    "original48": {
+      "error_percent": 35.78923277301333,
+      "rms_dbfs": -18.96881481330699,
+      "peak_dbfs": -1.6942787709882992,
+      "correlation": 0.974117804622741,
+      "level_compensated_error_percent": 22.60437044137209,
+      "diagnostic_gain_db": -2.1770176226148346
+    },
+    "updated44100": {
+      "error_percent": 9.696923491873534,
+      "rms_dbfs": -21.012259382718387,
+      "peak_dbfs": -4.470847683341572,
+      "correlation": 0.9953060621270968,
+      "level_compensated_error_percent": 9.677738182245939,
+      "diagnostic_gain_db": 0.05336944479572721
+    },
+    "updated48000": {
+      "error_percent": 9.773672631695016,
+      "rms_dbfs": -21.030029300364674,
+      "peak_dbfs": -4.51192982819451,
+      "correlation": 0.9952448944017896,
+      "level_compensated_error_percent": 9.740435577587615,
+      "diagnostic_gain_db": 0.07057210555565235
+    }
+  },
+  "40": {
+    "target48": {
+      "error_percent": 0.0,
+      "rms_dbfs": -26.238016441625717,
+      "peak_dbfs": -7.504797142812878,
+      "correlation": 1.0,
+      "level_compensated_error_percent": 0.0,
+      "diagnostic_gain_db": 0.0
+    },
+    "original48": {
+      "error_percent": 21.74652508986071,
+      "rms_dbfs": -26.883638204999546,
+      "peak_dbfs": -9.565251280452093,
+      "correlation": 0.9772954961820942,
+      "level_compensated_error_percent": 21.18894907325828,
+      "diagnostic_gain_db": 0.4461231446987286
+    },
+    "updated44100": {
+      "error_percent": 13.507043392367653,
+      "rms_dbfs": -26.360858280236492,
+      "peak_dbfs": -7.885094665415303,
+      "correlation": 0.9908498819504895,
+      "level_compensated_error_percent": 13.498164891800911,
+      "diagnostic_gain_db": 0.04303047333647823
+    },
+    "updated48000": {
+      "error_percent": 13.390789540026306,
+      "rms_dbfs": -26.37968398550241,
+      "peak_dbfs": -7.843540148036482,
+      "correlation": 0.9910216083813493,
+      "level_compensated_error_percent": 13.371431270349266,
+      "diagnostic_gain_db": 0.06331522937608877
+    }
+  }
+}

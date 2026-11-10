@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
-project(BLPBitcrusher VERSION 1.0.2 LANGUAGES C CXX)
+project(BLPBitcrusher VERSION 1.0.0 LANGUAGES C CXX)
 
 set(BLP_JUCE_SOURCE "" CACHE PATH "Path to a local JUCE 8.0.12 checkout")
 if(BLP_JUCE_SOURCE)

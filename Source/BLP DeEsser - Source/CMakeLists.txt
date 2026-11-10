@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(DeEsser VERSION 1.0.0 LANGUAGES CXX)
+project(DeEsser VERSION 1.0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(JUCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/JUCE" CACHE PATH "JUCE source")
 add_subdirectory("${JUCE_DIR}" JUCE)
@@ -14,3 +14,11 @@ target_link_libraries(DeEsserTests PRIVATE juce::juce_audio_utils)
 
 
 
+
+option(CALIBRATION_HOST "Build loaded-VST3 calibration host" OFF)
+if(CALIBRATION_HOST)
+ juce_add_console_app(DeEsserCalibrationHost PRODUCT_NAME "DeEsser Calibration Host")
+ target_sources(DeEsserCalibrationHost PRIVATE Calibration/RenderHost.cpp)
+ target_compile_definitions(DeEsserCalibrationHost PRIVATE JUCE_PLUGINHOST_VST3=1 JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1)
+ target_link_libraries(DeEsserCalibrationHost PRIVATE juce::juce_audio_utils)
+endif()

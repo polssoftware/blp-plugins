@@ -1,0 +1,7 @@
+PASS 44100 Hz: loaded VST3 sweeps, neutral, stereo, coefficient stability, automation, bypass, transitions
+PASS 48000 Hz: loaded VST3 sweeps, neutral, stereo, coefficient stability, automation, bypass, transitions
+max_pole_radius=0.991449184109
+max_zero_radius=0.991449184109
+max_dc_transition_step=7.75973312557e-05
+max_automation_output=3.98313250116e-06
+PASS saved parameters and editor dimensions

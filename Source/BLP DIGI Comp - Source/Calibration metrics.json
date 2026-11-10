@@ -1,0 +1,26 @@
+{
+  "1:original": {
+    "error_percent": 4.9032230196556785,
+    "error_unclipped_percent": 4.9032230196556785,
+    "rms_dbfs": -18.437655448433542,
+    "peak_dbfs": -1.7644714275041162
+  },
+  "1:updated": {
+    "error_percent": 4.903261333491186,
+    "error_unclipped_percent": 4.903261333491186,
+    "rms_dbfs": -18.437530517578125,
+    "peak_dbfs": -1.7641466856002808
+  },
+  "20:original": {
+    "error_percent": 60.598775506673384,
+    "error_unclipped_percent": 60.735151052163,
+    "rms_dbfs": -23.344775841309094,
+    "peak_dbfs": -4.6407124691704595
+  },
+  "20:updated": {
+    "error_percent": 12.44209865747581,
+    "error_unclipped_percent": 11.621153408799564,
+    "rms_dbfs": -15.61769962310791,
+    "peak_dbfs": 4.100717544555664
+  }
+}

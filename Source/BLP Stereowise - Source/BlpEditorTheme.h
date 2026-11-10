@@ -224,9 +224,25 @@ inline void paintHeader(juce::Graphics& g, int width, const juce::String& title)
     g.fillRect(0, 33, width, 1);
     g.setColour(headerAccent);
     g.fillRoundedRectangle(10.0f, 10.0f, 3.0f, 14.0f, 1.5f);
+    const juce::String version("v1.0.0");
+    const juce::Font titleFont(juce::FontOptions(15.0f, juce::Font::bold));
+    const juce::Font versionFont(juce::FontOptions(9.5f));
+    const auto textWidth = [](const juce::Font& font, const juce::String& text)
+    {
+        juce::GlyphArrangement shaped;
+        shaped.addLineOfText(font, text, 0.0f, 0.0f);
+        return static_cast<int>(std::ceil(shaped.getBoundingBox(0, shaped.getNumGlyphs(), true).getWidth()));
+    };
+    const auto versionWidth = textWidth(versionFont, version) + 2;
+    const auto titleWidth = juce::jmin(textWidth(titleFont, title) + 1,
+                                     width - 61 - versionWidth - 5);
     g.setColour(textWhite);
-    g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
-    g.drawFittedText(title, { 19, 0, width - 65, 33 }, juce::Justification::centredLeft, 1);
+    g.setFont(titleFont);
+    g.drawFittedText(title, { 19, 0, titleWidth, 33 }, juce::Justification::centredLeft, 1, 0.6f);
+    g.setFont(versionFont);
+    g.drawText(version, juce::Rectangle<int> { 19 + titleWidth + 5, 1, versionWidth, 33 },
+               juce::Justification::centredLeft, false);
+    g.setFont(titleFont);
 }
 
 class BypassButton final : public juce::TextButton

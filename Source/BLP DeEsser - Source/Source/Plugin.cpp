@@ -20,7 +20,7 @@ public:
  const juce::String getName() const override{return "BLP DeEsser";}
  bool acceptsMidi() const override{return false;} bool producesMidi() const override{return false;} double getTailLengthSeconds() const override{return 0;}
  bool isBusesLayoutSupported(const BusesLayout& b) const override{return b.getMainInputChannelSet()==b.getMainOutputChannelSet()&&(b.getMainOutputChannelSet()==juce::AudioChannelSet::mono()||b.getMainOutputChannelSet()==juce::AudioChannelSet::stereo());}
- void prepareToPlay(double sr,int) override {rate=sr;filters={};reduction=0;for(int i=0;i<7;++i){smooth[i].reset(sr,0.02);smooth[i].setCurrentAndTargetValue(state.getRawParameterValue(i<6?ids[i]:"bypass")->load());}}
+ void prepareToPlay(double sr,int) override {rate=std::isfinite(sr)&&sr>=8000?sr:44100;filters={};reduction=0;for(int i=0;i<7;++i){smooth[i].reset(rate,0.02);smooth[i].setCurrentAndTargetValue(state.getRawParameterValue(i<6?ids[i]:"bypass")->load());}}
  void releaseResources() override{}
  juce::AudioProcessorParameter* getBypassParameter() const override{return state.getParameter("bypass");}
  void processBlock(juce::AudioBuffer<float>& b,juce::MidiBuffer&) override{process(b,false);}
@@ -29,15 +29,25 @@ public:
   juce::ScopedNoDenormals nd;for(int i=0;i<7;++i)smooth[i].setTargetValue(i==6&&bypass?1.f:state.getRawParameterValue(i<6?ids[i]:"bypass")->load());
   for(int n=0;n<b.getNumSamples();++n){
    float f=smooth[0].getNextValue(),t=smooth[1].getNextValue(),amount=smooth[2].getNextValue()/100,attack=smooth[3].getNextValue(),release=smooth[4].getNextValue(),mix=smooth[5].getNextValue()/100,by=smooth[6].getNextValue();
-   // Constant-peak bandpass, Q=0.8. Subtract only this region from dry audio.
-   double w=juce::MathConstants<double>::twoPi*juce::jmin(double(f),rate*0.45)/rate, alpha=std::sin(w)/1.6,a0=1+alpha;
-   double b0=alpha/a0,a1=-2*std::cos(w)/a0,a2=(1-alpha)/a0;
-   float band[2]{},peak=0;for(int c=0;c<b.getNumChannels();++c){band[c]=filters[c].run(b.getSample(c,n),b0,0,-b0,a1,a2);peak=juce::jmax(peak,std::abs(band[c]));}
-   float over=juce::jmax(0.f,juce::Decibels::gainToDecibels(peak,-120.f)-t);
-   float target=juce::jmin(18.f,over*0.85f)*amount;
-   float coeff=(float)std::exp(-1.0/(rate*(target>reduction?attack:release)*0.001));reduction=target+coeff*(reduction-target);
-   float cut=(1-juce::Decibels::decibelsToGain(-reduction))*mix*(1-by);
-   for(int c=0;c<b.getNumChannels();++c)b.setSample(c,n,b.getSample(c,n)-cut*band[c]);
+   // Joint WAV calibration at 8 kHz, -19/-40 dB: a high-pass sidechain
+   // drives shared broadband attenuation. No fixed makeup or audio-path EQ.
+   // Other frequencies/thresholds remain a provisional continuous mapping.
+   constexpr double detectorQ=0.4863240918987984;
+   double w=juce::MathConstants<double>::twoPi*juce::jmin(double(f),rate*0.45)/rate, alpha=std::sin(w)/(2.0*detectorQ),a0=1+alpha;
+   double b0=(1+std::cos(w))/(2*a0),a1=-2*std::cos(w)/a0,a2=(1-alpha)/a0;
+   float band[2]{},peak=0;for(int c=0;c<b.getNumChannels();++c){band[c]=filters[c].run(b.getSample(c,n),b0,-2*b0,b0,a1,a2);peak=juce::jmax(peak,std::abs(band[c]));}
+   const float activation=juce::jlimit(0.f,1.f,-t/3.f);
+   const float detectorOffset=27.234570179963f+0.034567833895f*(t+40.f);
+   const float over=juce::jmax(0.f,juce::Decibels::gainToDecibels(peak,-120.f)-t+detectorOffset);
+   const float target=juce::jmin(20.152526391450f,over*0.85f)*amount*activation;
+   const float time=target>reduction?attack*0.996773380727f:release*0.341997085639f;
+   const float coeff=(float)std::exp(-1.0/(rate*time*0.001));
+   reduction=target+coeff*(reduction-target);
+   const float gain=juce::Decibels::decibelsToGain(-reduction);
+   const float wet=mix*(1-by);
+   for(int c=0;c<b.getNumChannels();++c){const float dry=b.getSample(c,n);
+    b.setSample(c,n,dry*(1.f+wet*(gain-1.f)));}
+
   }
  }
  int getNumPrograms() override{return 1;} int getCurrentProgram() override{return 0;} void setCurrentProgram(int) override{} const juce::String getProgramName(int) override{return "Vocal Default";} void changeProgramName(int,const juce::String&) override{}

@@ -1,0 +1,4 @@
+PASS actual VST3 44100 Hz ratio 1 finite output, exact unity
+PASS actual VST3 44100 Hz ratio 20 finite output
+PASS actual VST3 48000 Hz ratio 1 finite output, exact unity
+PASS actual VST3 48000 Hz ratio 20 finite output
