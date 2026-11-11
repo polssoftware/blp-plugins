@@ -1,5 +1,5 @@
 # BLP Plugins
-BandLab plugins **remade with AI** as vst3 plugins for DAWs.
+BL plugins **made with AI** as vst3 plugins for DAWs.
 
 Why? I don't know but it's free.
 
